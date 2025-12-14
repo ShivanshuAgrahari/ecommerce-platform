@@ -5,6 +5,7 @@ import com.ecommerce.checkout.client.CartClient;
 import com.ecommerce.checkout.client.CartResponse;
 import com.ecommerce.checkout.client.MedicineValidationClient;
 import com.ecommerce.checkout.client.PathologyValidationClient;
+import com.ecommerce.checkout.dto.CheckoutValidationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,5 +60,50 @@ public class CheckoutController {
         // 4. Lock cart ONLY after all validations pass
         return cartClient.lockCart(userId);
     }
+
+    @PostMapping("/validate")
+    public CheckoutValidationResponse validateCheckout(
+            @RequestHeader("X-USER-ID") String userId
+    ) {
+        CartResponse cart = cartClient.getCart(userId);
+
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            return new CheckoutValidationResponse(false, "Cart is empty");
+        }
+
+        if (!"ACTIVE".equals(cart.getStatus())) {
+            return new CheckoutValidationResponse(false, "Cart is not active");
+        }
+
+        // Split items by division
+        var medicineItems = cart.getItems().stream()
+                .filter(i -> "MEDICINE".equals(i.getDivision()))
+                .toList();
+
+        var pathologyItems = cart.getItems().stream()
+                .filter(i -> "PATHOLOGY".equals(i.getDivision()))
+                .toList();
+
+        // Validate medicine
+        if (!medicineItems.isEmpty()) {
+            var response = medicineValidationClient.validate(
+                    Map.of("items", medicineItems));
+            if (!response.isValid()) {
+                return new CheckoutValidationResponse(false, response.getReason());
+            }
+        }
+
+        // Validate pathology
+        if (!pathologyItems.isEmpty()) {
+            var response = pathologyValidationClient.validate(
+                    Map.of("items", pathologyItems));
+            if (!response.isValid()) {
+                return new CheckoutValidationResponse(false, response.getReason());
+            }
+        }
+
+        return new CheckoutValidationResponse(true, "Cart is valid for checkout");
+    }
+
 
 }
