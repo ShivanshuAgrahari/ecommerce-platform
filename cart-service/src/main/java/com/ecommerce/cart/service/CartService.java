@@ -113,4 +113,16 @@ public class CartService {
         cart.setTotalAmount(total);
     }
 
+    public Cart lockCart(String userId) {
+        Cart cart = getOrCreateCart(userId);
+
+        if (cart.getStatus() != CartStatus.ACTIVE) {
+            throw new IllegalStateException("Cart cannot be locked");
+        }
+
+        cart.setStatus(CartStatus.LOCKED);
+        return cartRepository.save(cart);
+    }
+
+
 }

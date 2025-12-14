@@ -26,4 +26,10 @@ public class CartController {
     ) {
         return cartService.addItem(userId, request);
     }
+
+    @PutMapping("/lock")
+    public Cart lockCart(@RequestHeader("X-USER-ID") String userId) {
+        return cartService.lockCart(userId);
+    }
+
 }
