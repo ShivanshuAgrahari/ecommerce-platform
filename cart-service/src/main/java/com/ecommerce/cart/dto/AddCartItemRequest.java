@@ -13,13 +13,13 @@ public class AddCartItemRequest {
     @NotNull
     private String itemId;
 
-    @NotNull
-    private String name;
+//    @NotNull
+//    private String name;
 
     @NotNull
     @Min(1)
     private Integer quantity;
 
-    @NotNull
-    private Double unitPrice;
+//    @NotNull
+//    private Double unitPrice;
 }

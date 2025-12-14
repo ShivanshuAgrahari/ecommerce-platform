@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class Cart {
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
-    private double totalAmount;
+    private BigDecimal totalAmount;
 
     private CartStatus status;
 }

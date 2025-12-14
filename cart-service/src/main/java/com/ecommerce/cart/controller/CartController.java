@@ -1,7 +1,6 @@
 package com.ecommerce.cart.controller;
 
 import com.ecommerce.cart.domain.Cart;
-import com.ecommerce.cart.domain.CartItem;
 import com.ecommerce.cart.dto.AddCartItemRequest;
 import com.ecommerce.cart.service.CartService;
 import jakarta.validation.Valid;
@@ -25,15 +24,6 @@ public class CartController {
             @RequestHeader("X-USER-ID") String userId,
             @Valid @RequestBody AddCartItemRequest request
     ) {
-        CartItem item = CartItem.builder()
-                .division(request.getDivision())
-                .itemId(request.getItemId())
-                .name(request.getName())
-                .quantity(request.getQuantity())
-                .unitPrice(request.getUnitPrice())
-                .totalPrice(request.getUnitPrice() * request.getQuantity())
-                .build();
-
-        return cartService.addItem(userId, item);
+        return cartService.addItem(userId, request);
     }
 }

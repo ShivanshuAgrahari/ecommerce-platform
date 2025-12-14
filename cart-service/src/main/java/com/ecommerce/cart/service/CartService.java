@@ -1,15 +1,21 @@
 package com.ecommerce.cart.service;
 
+import com.ecommerce.cart.client.MedicineClient;
+import com.ecommerce.cart.client.MedicineResponse;
 import com.ecommerce.cart.domain.*;
+import com.ecommerce.cart.dto.AddCartItemRequest;
 import com.ecommerce.cart.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
 public class CartService {
 
     private final CartRepository cartRepository;
+    private final MedicineClient medicineClient;
 
     public Cart getOrCreateCart(String userId) {
         return cartRepository.findByUserId(userId)
@@ -17,30 +23,61 @@ public class CartService {
                         Cart.builder()
                                 .userId(userId)
                                 .status(CartStatus.ACTIVE)
-                                .totalAmount(0)
+                                .totalAmount(BigDecimal.ZERO)
                                 .build()
                 ));
     }
 
-    public Cart addItem(String userId, CartItem item) {
+    public Cart addItem(String userId, AddCartItemRequest request) {
+
         Cart cart = getOrCreateCart(userId);
 
         if (cart.getStatus() != CartStatus.ACTIVE) {
             throw new IllegalStateException("Cart is not active");
         }
 
-        item.setTotalPrice(item.getUnitPrice() * item.getQuantity());
-        cart.getItems().add(item);
+        if (request.getDivision() == Division.MEDICINE) {
+            return addMedicine(cart, request);
+        }
 
+        throw new UnsupportedOperationException("Division not supported yet");
+    }
+
+    private Cart addMedicine(Cart cart, AddCartItemRequest request) {
+
+        MedicineResponse medicine =
+                medicineClient.getMedicineById(request.getItemId());
+
+        if (medicine == null || Boolean.FALSE.equals(medicine.getActive())) {
+            throw new IllegalStateException("Medicine not available");
+        }
+
+        BigDecimal unitPrice = medicine.getPrice();
+
+        BigDecimal totalPrice =
+                unitPrice.multiply(BigDecimal.valueOf(request.getQuantity()));
+
+        CartItem item = CartItem.builder()
+                .division(Division.MEDICINE)
+                .itemId(medicine.getId())
+                .name(medicine.getName())
+                .quantity(request.getQuantity())
+                .unitPrice(unitPrice)
+                .totalPrice(totalPrice)
+                .build();
+
+        cart.getItems().add(item);
         recalculate(cart);
+
         return cartRepository.save(cart);
     }
 
     private void recalculate(Cart cart) {
-        double total = cart.getItems()
-                .stream()
-                .mapToDouble(CartItem::getTotalPrice)
-                .sum();
+        BigDecimal total = cart.getItems().stream()
+                .map(CartItem::getTotalPrice)   // returns BigDecimal
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         cart.setTotalAmount(total);
     }
+
 }

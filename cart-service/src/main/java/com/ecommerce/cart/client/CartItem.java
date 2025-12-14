@@ -1,6 +1,6 @@
-package com.ecommerce.cart.domain;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+package com.ecommerce.cart.client;
+
+import com.ecommerce.cart.domain.Division;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -12,11 +12,9 @@ import java.math.BigDecimal;
 public class CartItem {
     private Division division;
     private String itemId;
+    private Integer quantity;
+
     private String name;
-    private int quantity;
-
-
     private BigDecimal unitPrice;
-
     private BigDecimal totalPrice;
 }
